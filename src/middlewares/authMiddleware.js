@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import prisma from '../models/user.js';
+import prisma from '../prismaClient.js';
 import { refreshAccessToken } from '../controllers/authController.js';
 
 export const authMiddleware = async (req, res, next) => {
@@ -20,17 +20,28 @@ export const authMiddleware = async (req, res, next) => {
     }
 
     req.user = decoded;
-    next();
+    // 프로필 접근 시 사용자 정보를 포함하여 응답합니다.
+    res.status(200).json({
+      message: '프로필 접근 성공',
+      user: req.user
+    });
   } catch (err) {
     if (err.name === 'TokenExpiredError') {
       // Access Token이 만료된 경우, Refresh Token을 사용하여 갱신
       try {
         const newAccessToken = await refreshAccessToken(req);
-        if (newAccessToken) {
-          // 새 Access Token을 헤더에 설정하고 요청을 다시 진행
-          req.headers.authorization = `Bearer ${newAccessToken}`;
-          next();
-        }
+        // 새 액세스 토큰을 헤더에 설정하고 사용자 정보를 유지합니다.
+        req.headers.authorization = `Bearer ${newAccessToken}`;
+        
+        // 새 액세스 토큰으로 디코딩하여 사용자 정보를 가져옵니다.
+        const decoded = jwt.verify(newAccessToken, process.env.JWT_SECRET);
+        req.user = decoded;
+
+        // 프로필 접근 시 사용자 정보를 포함하여 응답합니다.
+        res.status(200).json({
+          message: '프로필 접근 성공',
+          user: req.user
+        });
       } catch (refreshErr) {
         return res.status(403).json({ message: '새로운 Access Token 발급 실패' });
       }

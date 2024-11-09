@@ -1,22 +1,7 @@
 import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
-import prisma from '../models/user.js';
-
-// JWT 액세스 토큰 생성
-export const generateAccessToken = (user) => {
-  return jwt.sign(
-    { userId: user.userID, username: user.username, iat: Math.floor(Date.now() / 1000) },
-    process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_ACCESS_EXPIRATION }
-  );
-};
-
-// JWT 리프래쉬 토큰 생성
-export const generateRefreshToken = (user) => {
-  return jwt.sign({ userId: user.userID, username: user.username }, process.env.JWT_REFRESH_SECRET, {
-    expiresIn: process.env.JWT_REFRESH_EXPIRATION }
-  );
-};
+import prisma from '../prismaClient.js';
+import { generateAccessToken, generateRefreshToken } from './authController.js';
+import { sendVerificationEmail } from '../services/emailService.js';
 
 // 회원가입 컨트롤러
 export const registerUser = async (req, res, next) => {
@@ -25,9 +10,7 @@ export const registerUser = async (req, res, next) => {
   try {
     // 중복 username 및 email 검사
     const existingUser = await prisma.user.findFirst({
-      where: {
-        OR: [{ username }, { email }],
-      },
+      where: { OR: [{ username }, { email }], },
     });
 
     if (existingUser) {
@@ -37,7 +20,7 @@ export const registerUser = async (req, res, next) => {
 
     // 비밀번호 bcrypt 해싱
     const hashedPassword = await bcrypt.hash(password, 10);
-
+    
     // 새로운 사용자 생성
     const newUser = await prisma.user.create({
       data: {
@@ -46,7 +29,10 @@ export const registerUser = async (req, res, next) => {
         email,
       },
     });
-    res.status(201).json({ message: '회원가입 성공!', userId: newUser.userID });
+
+    await sendVerificationEmail(newUser);
+    res.status(201).json({ message: '회원가입 성공! 이메일 인증을 완료해주세요.', userId: newUser.userID });
+    //res.status(201).json({ message: '회원가입 성공!', userId: newUser.userID });
   } catch (err) {
     next(err); // 에러는 다음 미들웨어로 전달
   }
@@ -73,6 +59,13 @@ export const loginUser = async (req, res, next) => {
       return res.status(400).json({ message: '비밀번호가 올바르지 않습니다.' });
     }
 
+    if (!user.emailVerified && !user.adminVerified) {
+      return res.status(403).json({ message: '이메일 인증과 관리자 인증이 완료되지 않았습니다.' });
+    }
+
+    if (!user.emailVerified) { return res.status(403).json({ message: '이메일 인증이 완료되지 않았습니다.' }); }
+    if (!user.adminVerified) { return res.status(403).json({ message: '관리자 인증이 완료되지 않았습니다.' }); }
+
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
 
@@ -84,4 +77,14 @@ export const loginUser = async (req, res, next) => {
   } catch (err) {
     next(err); // 에러는 다음 미들웨어로 전달
   }
+};
+
+// 로그아웃 컨트롤러
+export const logoutUser = (req, res) => {
+  
+  // 쿠키에서 refreshToken을 삭제하여 로그아웃 처리
+  res.clearCookie('refreshToken', { httpOnly: true, secure: false, sameSite: 'strict' });
+  
+  // 로그아웃 성공 응답
+  res.status(200).json({ message: '로그아웃 성공!' });
 };

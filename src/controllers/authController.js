@@ -1,6 +1,22 @@
 import jwt from 'jsonwebtoken';
-import { generateAccessToken } from './userController.js';
-import prisma from '../models/user.js'
+import prisma from '../prismaClient.js'
+
+
+// JWT 액세스 토큰 생성
+export const generateAccessToken = (user) => {
+  return jwt.sign(
+    { userId: user.userID, username: user.username, iat: Math.floor(Date.now() / 1000) },
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_ACCESS_EXPIRATION }
+  );
+};
+
+// JWT 리프래쉬 토큰 생성
+export const generateRefreshToken = (user) => {
+  return jwt.sign({ userId: user.userID, username: user.username }, process.env.JWT_REFRESH_SECRET, {
+    expiresIn: process.env.JWT_REFRESH_EXPIRATION }
+  );
+};
 
 export const refreshAccessToken = async (req) => {
   const refreshToken = req.cookies.refreshToken;
