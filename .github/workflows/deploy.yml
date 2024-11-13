@@ -42,5 +42,5 @@ jobs:
             git pull || exit 1
             npm install || exit 1
             npx prisma generate || exit 1
-            npm run start || exit 1
+            pm2 start src/app.js --name traffic-incident-analysis || pm2 restart traffic-incident-analysis
           "
