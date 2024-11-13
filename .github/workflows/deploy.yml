@@ -41,6 +41,6 @@ jobs:
             cd traffic-incident-analysis-backend
             git pull || exit 1
             npm install || exit 1
-            npm prisma generate || exit 1
+            npx prisma generate || exit 1
             npm run start || exit 1
           "
