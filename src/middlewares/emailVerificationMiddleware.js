@@ -1,4 +1,4 @@
-import prisma from '../prismaClient.js';
+import prisma from '../config/prismaClient.js';
 
 // 사용자 이메일 인증 미들웨어
 export const verifyUserEmailToken = async (req, res, next) => {

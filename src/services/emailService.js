@@ -1,6 +1,6 @@
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
-import prisma from '../prismaClient.js';
+import prisma from '../config/prismaClient.js';
 import dotenv from 'dotenv';
 
 dotenv.config();
