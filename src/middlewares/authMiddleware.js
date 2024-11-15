@@ -18,13 +18,14 @@ export const authMiddleware = async (req, res, next) => {
     if (!user) {
       return res.status(401).json({ message: '사용자를 찾을 수 없습니다.' });
     }
-
-    req.user = decoded;
+    req.user = { userId: user.userID, username: user.username }; // 사용자 정보 설정
+    next();
+    //req.user = decoded;
     // 프로필 접근 시 사용자 정보를 포함하여 응답합니다.
-    res.status(200).json({
+    /*res.status(200).json({
       message: '프로필 접근 성공',
       user: req.user
-    });
+    });*/
   } catch (err) {
     if (err.name === 'TokenExpiredError') {
       // Access Token이 만료된 경우, Refresh Token을 사용하여 갱신

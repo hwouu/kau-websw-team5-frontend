@@ -23,10 +23,14 @@ model User {
   emailToken    String?
   adminToken    String?
   createdAt     DateTime  @default(now())
+
+  recordings    Recording[] // User가 여러 Recording을 가질 수 있음
 }
 
 model Recording {
   id        Int      @id @default(autoincrement())
+  userID    Int 
   filePath  String
   createdAt DateTime @default(now())
+  user      User     @relation(fields: [userID], references: [userID])
 }
