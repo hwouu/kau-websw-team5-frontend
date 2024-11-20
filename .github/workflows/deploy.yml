@@ -42,9 +42,8 @@ jobs:
             git pull || exit 1
             npm install || exit 1
             npx prisma generate || exit 1
-            if pm2 list | grep -q 'traffic-incident-analysis'; then
-              pm2 reload traffic-incident-analysis || pm2 restart traffic-incident-analysis
-            else
-              pm2 start src/app.js --name traffic-incident-analysis
+            if pm2 list | grep -q traffic-incident-analysis; then
+              pm2 delete traffic-incident-analysis || exit 1
             fi
+            pm2 start src/app.js --name traffic-incident-analysis || exit 1
           "
