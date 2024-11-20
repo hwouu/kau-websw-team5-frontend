@@ -5,7 +5,13 @@ import errorHandler from './middlewares/errorHandler.js';
 import cookieParser from 'cookie-parser';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import cors from 'cors';
 import fs from 'fs';
+
+const corsOptions = {
+  origin: '*', // 모든 도메인 허용
+  credentials: true, // 쿠키를 포함한 요청을 허용 
+};
 
 const app = express();
 
@@ -13,6 +19,7 @@ const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, '..', 'public'))); // 정적파일 제공

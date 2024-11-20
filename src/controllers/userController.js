@@ -32,7 +32,6 @@ export const registerUser = async (req, res, next) => {
 
     await sendVerificationEmail(newUser);
     res.status(201).json({ message: '회원가입 성공! 이메일 인증을 완료해주세요.', userId: newUser.userID });
-    //res.status(201).json({ message: '회원가입 성공!', userId: newUser.userID });
   } catch (err) {
     next(err); // 에러는 다음 미들웨어로 전달
   }
