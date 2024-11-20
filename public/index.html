@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Webcam Stream</title>
+</head>
+<body>
+  <!-- 로그인 섹션 -->
+  <h1>Login</h1>
+  <div id="loginSection">
+    <!-- 사용자 이름 입력 -->
+    <input type="text" id="username" placeholder="Username" required />
+    <!-- 비밀번호 입력 -->
+    <input type="password" id="password" placeholder="Password" required />
+    <!-- 로그인 버튼 -->
+    <button id="loginButton">Login</button>
+    <!-- 로그인 상태 메시지 -->
+    <p id="loginStatus"></p>
+  </div>
+
+  <!-- 웹캠 섹션: 로그인 후 표시 -->
+  <div id="webcamSection" style="display: none;">
+    <h2>Webcam Stream</h2>
+    <video id="webcam" autoplay></video>
+    <button id="startButton" disabled>Start Recording</button>
+    <button id="stopButton" disabled>Stop Recording</button>
+  </div>
+
+  <!-- Socket.io 라이브러리 포함 -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    // Socket.io를 사용하여 백엔드 서버와 연결
+    const socket = io(); // 기본적으로 같은 호스트와 포트에 연결
+
+    // HTML 요소 참조
+    const videoElement = document.getElementById('webcam');
+    const startButton = document.getElementById('startButton');
+    const stopButton = document.getElementById('stopButton');
+    const loginButton = document.getElementById('loginButton');
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+    const loginStatus = document.getElementById('loginStatus');
+    const webcamSection = document.getElementById('webcamSection');
+    const loginSection = document.getElementById('loginSection');
+    let mediaRecorder;
+    let recordedChunks = [];
+    let accessToken = null;
+
+    // 서버와 연결 확인
+    socket.on('connect', () => {
+      console.log('Connected to server with Socket ID:', socket.id);
+    });
+
+    // 서버에서 스트림 데이터 수신
+    socket.on('stream', (data) => {
+      console.log('Received stream data from server');
+      // 추가 처리: 스트림 데이터를 다른 클라이언트에 렌더링할 수 있음
+    });
+
+    // 로그인 이벤트 핸들러
+    loginButton.addEventListener('click', async () => {
+      const username = usernameInput.value;
+      const password = passwordInput.value;
+
+      try {
+        // 로그인 요청을 서버로 보냄
+        const response = await fetch('/api/users/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ username, password }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          accessToken = data.accessToken;
+          loginStatus.textContent = 'Login successful!';
+          loginStatus.style.color = 'green';
+
+          // 로그인 섹션 숨기고 웹캠 섹션 표시
+          webcamSection.style.display = 'block';
+          loginSection.style.display = 'none';
+          startButton.disabled = false;
+        } else {
+          loginStatus.textContent = 'Login failed. Please try again.';
+          loginStatus.style.color = 'red';
+        }
+      } catch (error) {
+        console.error('Error during login:', error);
+        loginStatus.textContent = 'An error occurred. Please try again.';
+        loginStatus.style.color = 'red';
+      }
+    });
+
+    // 녹화 시작 및 스트림 핸들러
+    startButton.addEventListener('click', () => {
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then((stream) => {
+          videoElement.srcObject = stream;
+          mediaRecorder = new MediaRecorder(stream);
+
+          mediaRecorder.ondataavailable = (event) => {
+            if (event.data.size > 0) {
+              recordedChunks.push(event.data);
+              socket.emit('stream', event.data); // Stream to server
+            }
+          };
+
+          mediaRecorder.start(100); // 100ms마다 데이터 생성
+          startButton.disabled = true;
+          stopButton.disabled = false;
+        })
+        .catch(console.error);
+    });
+
+    // 녹화 중지 및 저장 핸들러
+    stopButton.addEventListener('click', () => {
+      mediaRecorder.stop();
+      videoElement.srcObject.getTracks().forEach(track => track.stop()); // Stop video
+
+      const blob = new Blob(recordedChunks, { type: 'video/mp4' });
+      const formData = new FormData();
+      formData.append('video', blob, 'recording.mp4');
+
+      fetch('/api/stream/upload', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`, // Include access token
+        },
+        body: formData,
+      }).then(response => response.json())
+        .then(data => console.log('File saved:', data))
+        .catch(console.error);
+
+      recordedChunks = []; 
+      startButton.disabled = false;
+      stopButton.disabled = true;
+    });
+  </script>
+</body>
+</html>

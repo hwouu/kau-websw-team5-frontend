@@ -38,9 +38,12 @@ jobs:
       - name: SSH and Deploy
         run: |
           ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_PUBLIC_IP }} "
-            cd traffic-incident-analysis-backend
+            cd traffic-incident-analysis-backend || exit 1
             git pull || exit 1
             npm install || exit 1
             npx prisma generate || exit 1
-            pm2 start src/app.js --name traffic-incident-analysis || pm2 restart traffic-incident-analysis
+            if pm2 list | grep -q traffic-incident-analysis; then
+              pm2 delete traffic-incident-analysis || exit 1
+            fi
+            pm2 start src/server.js --name traffic-incident-analysis || exit 1
           "

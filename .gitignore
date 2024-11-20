@@ -5,4 +5,4 @@ LICENSE
 prisma/migrations/
 .DS_Store
 *.log
-public/
+public/recordings/
