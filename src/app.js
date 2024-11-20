@@ -9,7 +9,7 @@ dotenv.config(); // .env 파일 로드
 
 
 const corsOptions = {
-  origin: 'http://localhost:3000', // 모든 도메인 허용
+  origin: ['https://traffic-incident-analysis.vercel.app', 'http://localhost:3000'], // 도메인 허용
   credentials: true, // 쿠키를 포함한 요청을 허용 
 };
 
