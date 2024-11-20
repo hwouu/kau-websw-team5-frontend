@@ -3,7 +3,7 @@ import crypto from 'crypto';
 import prisma from '../prismaClient.js';
 import dotenv from 'dotenv';
 
-dotenv.config();
+dotenv.config({ override: true });
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
