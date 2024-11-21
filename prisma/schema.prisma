@@ -24,3 +24,12 @@ model User {
   adminToken    String?
   createdAt     DateTime  @default(now())
 }
+
+//파일 업로드를 위한 모델 추가
+model Upload {
+  id         Int      @id @default(autoincrement())
+  fileName   String
+  filePath   String
+  fileType   String
+  uploadedAt DateTime @default(now())
+}
