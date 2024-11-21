@@ -24,7 +24,7 @@ export const uploadRecording = async (req, res) => {
 
     console.log('Upload request received:', {
       file: req.file,
-      userId: req.user?.userId
+      userId: req.user?.userId,
     });
 
     // 2. 디렉토리 확인
@@ -35,14 +35,15 @@ export const uploadRecording = async (req, res) => {
     }
 
     // 3. 파일 읽기
+    let fileContent; // 변수 선언
     try {
-      const fileContent = fs.readFileSync(req.file.path);
+      fileContent = fs.readFileSync(req.file.path); // 파일 내용을 변수에 할당
       console.log('File read successfully, size:', fileContent.length);
     } catch (readError) {
       console.error('File read error:', readError);
       return res.status(500).json({
         message: 'Failed to read uploaded file',
-        error: readError.message
+        error: readError.message,
       });
     }
 
@@ -62,7 +63,7 @@ export const uploadRecording = async (req, res) => {
       console.error('S3 upload error:', s3Error);
       return res.status(500).json({
         message: 'S3 upload failed',
-        error: s3Error.message
+        error: s3Error.message,
       });
     }
 
@@ -83,7 +84,7 @@ export const uploadRecording = async (req, res) => {
       console.error('Database error:', dbError);
       return res.status(500).json({
         message: 'Database operation failed',
-        error: dbError.message
+        error: dbError.message,
       });
     }
 
@@ -101,7 +102,7 @@ export const uploadRecording = async (req, res) => {
     // 8. 성공 응답
     return res.status(200).json({
       message: 'File uploaded successfully',
-      path: fileUrl
+      path: fileUrl,
     });
 
   } catch (error) {
@@ -109,7 +110,7 @@ export const uploadRecording = async (req, res) => {
     return res.status(500).json({
       message: 'Upload error',
       error: error.message,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
     });
   }
 };
