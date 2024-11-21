@@ -48,7 +48,7 @@ export const verifyAdminEmailToken = async (req, res, next) => {
     });
 
     // 인증 후 BASE_URL로 리디렉션
-    res.redirect(process.env.BASE_URL);
+    res.redirect(process.env.BASE_URL_REDIRECT);
     //res.status(200).json({ message: '사용자가 관리자에 의해 인증되었습니다.' });
   } catch (error) {
     console.error('Error verifying admin email:', error);
