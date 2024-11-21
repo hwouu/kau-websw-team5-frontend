@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt';
-import prisma from '../prismaClient.js';
+import prisma from '../config/prismaClient.js';
 import { generateAccessToken, generateRefreshToken } from './authController.js';
 import { sendVerificationEmail } from '../services/emailService.js';
 

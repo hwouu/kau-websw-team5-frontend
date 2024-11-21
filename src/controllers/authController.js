@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import prisma from '../prismaClient.js'
+import prisma from '../config/prismaClient.js'
 
 
 // JWT 액세스 토큰 생성
