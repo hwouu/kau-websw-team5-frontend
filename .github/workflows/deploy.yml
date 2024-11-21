@@ -48,5 +48,9 @@ jobs:
             if pm2 list | grep -q traffic-incident-analysis; then
               pm2 delete traffic-incident-analysis || exit 1
             fi
+<<<<<<< HEAD
             pm2 start src/app.js --name traffic-incident-analysis || exit 1
+=======
+            pm2 start src/server.js --name traffic-incident-analysis || exit 1
+>>>>>>> webCamKangyeon
           "
