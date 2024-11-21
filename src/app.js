@@ -4,9 +4,9 @@ import userRoutes from './routes/userRoutes.js';
 import errorHandler from './middlewares/errorHandler.js';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
+import chatbotRoutes from './routes/chatbotRoutes.js';
 
 dotenv.config(); // .env 파일 로드
-
 
 const corsOptions = {
   origin: ['https://traffic-incident-analysis.vercel.app', 'http://localhost:3000'], // 도메인 허용
@@ -21,5 +21,7 @@ app.use(cookieParser());
 app.use('/api/users', userRoutes);
 
 app.use(errorHandler); // 전역 에러 핸들링 미들웨어 등록
+
+app.use('/api/chatbot', chatbotRoutes);
 
 app.listen(3000, () => console.log('Server Started'));
