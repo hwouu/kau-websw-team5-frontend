@@ -1,5 +1,6 @@
 import express from 'express';
 import multer from 'multer';
+import { authMiddleware } from '../middlewares/authMiddleware.js';
 import { getWelcomeMessage, analyzeAccident, reportAccident} from '../controllers/chatbotController.js';
 
 
@@ -7,6 +8,9 @@ import { getWelcomeMessage, analyzeAccident, reportAccident} from '../controller
 const upload = multer({ dest: 'uploads/' });
 
 const router = express.Router();
+
+// 인증 미들웨어 적용 (jwt 토큰)
+router.use(authMiddleware); 
 
 // 초기 메시지 반환
 router.get('/initial', getWelcomeMessage);  
