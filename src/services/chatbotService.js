@@ -1,5 +1,10 @@
 import axios from 'axios';
 import path from 'path';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+console.log('CHATGPT_API_KEY:', process.env.CHATGPT_API_KEY);
 
 const CHATGPT_API_URL = 'https://api.openai.com/v1/chat/completions';
 const CHATGPT_API_KEY = process.env.CHATGPT_API_KEY;
