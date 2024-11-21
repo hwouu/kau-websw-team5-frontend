@@ -19,6 +19,7 @@ const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, '..', 'public'))); // 정적파일 제공
