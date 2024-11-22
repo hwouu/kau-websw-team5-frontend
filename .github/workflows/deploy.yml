@@ -24,16 +24,21 @@ jobs:
           echo "${{ secrets.SSH_KNOWN_HOSTS_FIXED }}" >> ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
 
+      - name: Cache NPM modules
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
       - name: Install Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '20'
 
       - name: Sync and Install dependencies
-        run: |
-          npm install
-          npm dedupe
-          npm ci
+        run: npm ci
 
       - name: Generate Prisma client
         run: npx prisma generate
@@ -45,7 +50,7 @@ jobs:
             git pull || exit 1
             npm install || exit 1
             npx prisma generate || exit 1
-            npx prisma migrate dev --name create_recording_table || exit 1
+            npx prisma migrate deploy || exit 1
             if pm2 list | grep -q traffic-incident-analysis; then
               pm2 delete traffic-incident-analysis || exit 1
             fi
