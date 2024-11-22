@@ -2,7 +2,6 @@ node_modules/
 http/
 LICENSE
 .env
-prisma/migrations/
 .DS_Store
 *.log
 public/recordings/
