@@ -1,3 +1,4 @@
+// 업로드 파일 유효성 검사
 export const validateFile = (req, res, next) => {
   const files = req.files;
 

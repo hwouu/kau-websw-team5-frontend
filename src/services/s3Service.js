@@ -21,11 +21,11 @@ export const uploadToS3 = async (file, folderName) => {
     ContentType: file.mimetype,
   };
 
-  const command = new PutObjectCommand(uploadParams);
-
   try {
-    const result = await s3Client.send(command);
-    return { Location: `https://${process.env.AWS_S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${uploadParams.Key}` };
+    const result = await s3Client.send(new PutObjectCommand(uploadParams));
+    return {
+      Location: `https://${process.env.AWS_S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${uploadParams.Key}`,
+    };
   } catch (error) {
     console.error('S3 업로드 오류:', error);
     throw error;

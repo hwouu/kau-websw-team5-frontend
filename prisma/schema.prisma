@@ -25,6 +25,7 @@ model User {
   createdAt     DateTime  @default(now())
 
   recordings    Recording[] // User가 여러 Recording을 가질 수 있음
+  uploads       Upload[] // User가 여러 Upload를 가질 수 있음
 }
 
 model Recording {
@@ -38,8 +39,9 @@ model Recording {
 //파일 업로드를 위한 모델 추가
 model Upload {
   id         Int      @id @default(autoincrement())
-  fileName   String
-  filePath   String
+  userID     Int
+  filePath   Json // 배열 형태의 파일 경로 저장
   fileType   String
   uploadedAt DateTime @default(now())
+  user       User     @relation(fields: [userID], references: [userID])
 }

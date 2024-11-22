@@ -6,4 +6,5 @@ prisma/migrations/
 .DS_Store
 *.log
 public/recordings/
-uploads/
+public/video/
+public/image/

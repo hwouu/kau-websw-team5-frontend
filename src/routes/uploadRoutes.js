@@ -1,23 +1,15 @@
 import express from 'express';
-import multer from 'multer';
+import upload from '../middlewares/multerconfig.js';
 import { validateFile } from '../middlewares/fileValidationMiddleware.js';
+import { authMiddleware } from '../middlewares/authMiddleware.js';
 import { handleFileUpload } from '../controllers/uploadController.js';
 
 const router = express.Router();
 
-// Multer 설정: 업로드 경로와 파일 이름 지정
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/'); // 'uploads' 폴더에 저장
-  },
-  filename: (req, file, cb) => {
-    cb(null, `${Date.now()}-${file.originalname}`);
-  },
-});
+// 인증 미들웨어 적용 (jwt 토큰)
+router.use(authMiddleware);
 
-const upload = multer({ storage });
-
-// 파일 업로드 라우트
-router.post('/upload', upload.array('files', 6), validateFile, handleFileUpload);
+// 파일 업로드 라우트 (최대 6개 파일 업로드)
+router.post('/upload', upload.array('files'), validateFile, handleFileUpload);
 
 export default router;
