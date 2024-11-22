@@ -6,6 +6,7 @@ import cookieParser from 'cookie-parser';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import cors from 'cors';
+import uploadRoutes from './routes/uploadRoutes.js';
 import chatbotRoutes from './routes/chatbotRoutes.js';
 
 const corsOptions = {
@@ -29,5 +30,7 @@ app.use('/api/stream', streamRoutes);
 app.use('/api/chatbot', chatbotRoutes);
 
 app.use(errorHandler); // 전역 에러 핸들링 미들웨어 등록
+
+app.use('/api/files', uploadRoutes);//업로드 파일 추가
 
 export default app;
