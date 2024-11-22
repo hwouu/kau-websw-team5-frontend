@@ -50,7 +50,7 @@ jobs:
             git pull || exit 1
             npm install || exit 1
             npx prisma generate || exit 1
-            npx prisma migrate deploy || exit 1
+            npx prisma migrate dev || exit 1
             if pm2 list | grep -q traffic-incident-analysis; then
               pm2 delete traffic-incident-analysis || exit 1
             fi

@@ -28,9 +28,8 @@ app.use(express.static(path.join(__dirname, '..', 'public'))); // 정적파일 �
 app.use('/api/users', userRoutes);
 app.use('/api/stream', streamRoutes);
 app.use('/api/chatbot', chatbotRoutes);
+app.use('/api/files', uploadRoutes);
 
 app.use(errorHandler); // 전역 에러 핸들링 미들웨어 등록
-
-app.use('/api/files', uploadRoutes);//업로드 파일 추가
 
 export default app;
