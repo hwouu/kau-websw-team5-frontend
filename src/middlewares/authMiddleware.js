@@ -20,12 +20,6 @@ export const authMiddleware = async (req, res, next) => {
     }
     req.user = { userId: user.userID, username: user.username }; // 사용자 정보 설정
     next();
-    //req.user = decoded;
-    // 프로필 접근 시 사용자 정보를 포함하여 응답합니다.
-    /*res.status(200).json({
-      message: '프로필 접근 성공',
-      user: req.user
-    });*/
   } catch (err) {
     if (err.name === 'TokenExpiredError') {
       // Access Token이 만료된 경우, Refresh Token을 사용하여 갱신
@@ -51,3 +45,13 @@ export const authMiddleware = async (req, res, next) => {
     }
   }
 };
+
+export const redirectIfAuthenticated = (req, res, next) => {
+  const token = req.cookies.refreshToken; // 로그인 상태를 Refresh Token으로 판단
+  if (token) {
+    // 이미 로그인된 경우 대시보드로 리다이렉트
+    return res.redirect('/dashboard');
+  }
+  next();
+};
+

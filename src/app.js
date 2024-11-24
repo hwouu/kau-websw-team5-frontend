@@ -8,6 +8,7 @@ import { fileURLToPath } from 'url';
 import cors from 'cors';
 import uploadRoutes from './routes/uploadRoutes.js';
 import chatbotRoutes from './routes/chatbotRoutes.js';
+import { redirectIfAuthenticated } from './middlewares/authMiddleware.js';
 
 const corsOptions = {
   origin: ['https://traffic-incident-analysis.vercel.app', 'http://localhost:3000', 'https://www.kautas.shop'], // 도메인 허용
@@ -24,6 +25,10 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, '..', 'public'))); // 정적파일 제공
+
+app.get('/', redirectIfAuthenticated, (req, res) => {
+  res.status(200).json({ message: '로그인 상태, 대시보드 접급 성공', user: req.user });
+});
 
 app.use('/api/users', userRoutes);
 app.use('/api/stream', streamRoutes);

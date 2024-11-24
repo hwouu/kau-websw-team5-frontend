@@ -6,6 +6,11 @@ import { verifyUserEmailToken, verifyAdminEmailToken } from '../middlewares/emai
 
 const router = express.Router();
 
+// 대시보드 라우트
+router.get('/dashboard', authMiddleware, (req, res) => {
+  res.status(200).json({ message: '대시보드 접근 성공', user: req.user });
+})
+
 // 회원가입 라우트
 router.post('/register', registerMiddleware, registerUser);
 
