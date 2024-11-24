@@ -10,7 +10,7 @@ import uploadRoutes from './routes/uploadRoutes.js';
 import chatbotRoutes from './routes/chatbotRoutes.js';
 
 const corsOptions = {
-  origin: ['https://traffic-incident-analysis.vercel.app', 'http://localhost:3000'], // 도메인 허용
+  origin: ['https://traffic-incident-analysis.vercel.app', 'http://localhost:3000', 'https://www.kautas.shop'], // 도메인 허용
   credentials: true, // 쿠키를 포함한 요청을 허용 
 };
 
