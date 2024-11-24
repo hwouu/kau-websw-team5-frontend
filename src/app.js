@@ -26,7 +26,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, '..', 'public'))); // 정적파일 제공
 
-app.get('/', redirectIfAuthenticated, (req, res) => {
+app.get('/api', redirectIfAuthenticated, (req, res) => {
   res.status(200).json({ message: '로그인 상태, 대시보드 접급 성공', user: req.user });
 });
 
