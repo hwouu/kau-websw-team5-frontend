@@ -2,11 +2,22 @@ import dotenv from 'dotenv';
 import http from 'http';
 import { Server } from 'socket.io';
 import app from './app.js';
+import https from 'https';
+import fs from 'fs';
 
 dotenv.config({ override: true }); // .env 파일 로드
 
+
+// SSL 인증서 로드
+const SSL_KEY_PATH = '/etc/letsencrypt/live/www.hwouu.shop/privkey.pem';
+const SSL_CERT_PATH = '/etc/letsencrypt/live/www.hwouu.shop/fullchain.pem';
+const sslOptions = {
+  key: fs.readFileSync(SSL_KEY_PATH), // SSL 키 파일
+  cert: fs.readFileSync(SSL_CERT_PATH), // SSL 인증서 파일
+};
+
 // HTTP 및 Socket.io 서버 생성
-const server = http.createServer(app);
+const server = https.createServer(sslOptions, app);
 const io = new Server(server, {
   cors: {
     origin: '*', // 모든 도메인 허용 (필요에 따라 제한 가능)
@@ -30,4 +41,4 @@ io.on('connection', (socket) => {
 });
 
 // 서버 시작
-server.listen(3000, () => console.log('Server started on port 3000'));
+server.listen(443, () => console.log('Server started on port 3000'));
