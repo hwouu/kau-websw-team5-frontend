@@ -54,8 +54,8 @@ model Reports {
   case_id         String    
   accident_type   String?   
   location        String    
-  date            DateTime  
-  time            DateTime  
+  date            DateTime  @db.Date // MySQL DATE와 매핑
+  time            DateTime  @db.Time // MySQL TIME과 매핑  
   analysis_status String    @default("분석중") 
   accident_name   String?   
   vehicle_1_type  String?   
