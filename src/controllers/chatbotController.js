@@ -6,27 +6,26 @@ export const getWelcomeMessage = (req, res) => {
     });
 }
 
-// 추가
 export const createReport = async (req, res) => {
     try {
         const userID = req.user?.userId;
         const report_id = await chatbotService.generateReportId();
         const case_id = await chatbotService.generateCaseId(req.body.accident_type);
-        const reportData = { ...req.body, user_id: userID, report_id, case_id }; // Expecting report_id, case_id, location, date, time, accident_type
-        
+        const reportData = { ...req.body, user_id: userID, report_id, case_id };
+
         if (!reportData.report_id || !reportData.case_id || !reportData.location || !reportData.date || !reportData.time || !reportData.accident_type) {
             return res.status(400).json({ message: '모든 필수 필드를 입력해주세요.' });
         }
 
-        const newReport = await chatbotService.createReport(reportData);
-        
+        const newReport = await chatbotService.createReportData(reportData);
         res.status(201).json({
             message: '보고서가 성공적으로 생성되었습니다.',
-            report: newReport
+            report: newReport,
         });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: '보고서 생성 중 오류가 발생했습니다.', error });
+        console.error('Error in createReport:', error.message);
+        console.error(error.stack);
+        res.status(500).json({ message: '보고서 생성 중 오류가 발생했습니다.', error: error.message });
     }
 };
 
