@@ -50,8 +50,8 @@ jobs:
             git pull || exit 1
             npm install --maxsockets=5 || exit 1
             # Drop the database (if not critical)
-            echo 'DROP DATABASE emergency;' | mysql -u root -p${{ secrets.DB_PASSWORD }} || true
-            echo 'CREATE DATABASE emergency;' | mysql -u root -p${{ secrets.DB_PASSWORD }} || true
+            echo 'DROP DATABASE emergency;' | mysql -u admin -p rkddus12! || true
+            echo 'CREATE DATABASE emergency;' | mysql -u admin -p rkddus12! || true
 
             # Recreate migrations
             rm -rf prisma/migrations || true
