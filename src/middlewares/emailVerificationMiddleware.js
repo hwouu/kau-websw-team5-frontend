@@ -21,7 +21,6 @@ export const verifyUserEmailToken = async (req, res, next) => {
 
     // 인증 후 BASE_URL로 리디렉션
     res.redirect(process.env.BASE_URL_REDIRECT);
-    //res.status(200).json({ message: '이메일 인증이 완료되었습니다.' });
   } catch (error) {
     console.error('Error verifying user email:', error);
     res.status(500).json({ message: '서버 오류로 인해 인증에 실패했습니다.' });
@@ -49,7 +48,6 @@ export const verifyAdminEmailToken = async (req, res, next) => {
 
     // 인증 후 BASE_URL로 리디렉션
     res.redirect(process.env.BASE_URL_REDIRECT);
-    //res.status(200).json({ message: '사용자가 관리자에 의해 인증되었습니다.' });
   } catch (error) {
     console.error('Error verifying admin email:', error);
     res.status(500).json({ message: '서버 오류로 인해 인증에 실패했습니다.' });

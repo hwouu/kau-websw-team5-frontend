@@ -33,6 +33,7 @@ model Recording {
   id        Int      @id @default(autoincrement())
   userID    Int 
   filePath  String
+  imageUrl  Json
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userID], references: [userID])
 }

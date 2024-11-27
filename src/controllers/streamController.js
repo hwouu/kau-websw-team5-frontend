@@ -1,10 +1,9 @@
 import prisma from '../config/prismaClient.js';
 import { uploadToS3 } from '../services/s3Service.js';
-import fs from 'fs';
+import { captureFrames } from '../services/captureFrames.js';
 import path from 'path';
+import fs from 'fs';
 
-
-// 녹화 파일을 AWS S3에 업로드하고 데이터베이스에 경로를 저장하는 함수
 export const uploadRecording = async (req, res) => {
   try {
     if (!req.file) {
@@ -12,32 +11,86 @@ export const uploadRecording = async (req, res) => {
     }
 
     const folderName = 'recordings/';
-    const result = await uploadToS3(req.file, folderName);
+    const videoResult = await uploadToS3(req.file, folderName);
+
+    const videoPath = req.file.path;
+    const outputDir = path.join('public', 'recordings', 'frames');
+    const videoDir = path.join('public', 'video'); // 로컬 video 디렉토리
+    const frameCount = 6;
+
+    // 캡처 이미지 생성
+    const capturedImages = await captureFrames(videoPath, outputDir, frameCount);
+
+    // 캡처 이미지들을 S3에 업로드
+    const imageFolder = `${folderName}frames/`;
+    const uploadedImages = await Promise.allSettled(
+      capturedImages.map(async (imagePath) => {
+        if (!fs.existsSync(imagePath)) {
+          console.error(`File not found: ${imagePath}`);
+          return null;
+        }
+        try {
+          const fileName = path.basename(imagePath);
+          const imageResult = await uploadToS3(
+            { path: imagePath, mimetype: 'image/jpeg' },
+            `${imageFolder}${Date.now()}-${fileName}`
+          );
+          fs.unlinkSync(imagePath); // 파일 삭제
+          return imageResult.Location;
+        } catch (error) {
+          console.error(`Failed to upload image: ${imagePath}`, error);
+          return null;
+        }
+      })
+    );
+
+    // 성공한 업로드만 필터링
+    const successfulUploads = uploadedImages
+      .filter((result) => result.status === 'fulfilled' && result.value)
+      .map((result) => result.value);
+
+    if (successfulUploads.length < frameCount) {
+      console.warn(
+        `Expected ${frameCount} images but only ${successfulUploads.length} were uploaded successfully.`
+      );
+    }
+
+    console.log('Successfully uploaded images:', successfulUploads);
 
     // DB 저장
     await prisma.recording.create({
       data: {
-        filePath: result.Location,
+        filePath: videoResult.Location,
+        imageUrl: successfulUploads,
         createdAt: new Date(),
         userID: req.user.userId,
       },
     });
 
-    // 모든 임시 파일 삭제
-    const tempDir = path.join('public', 'recordings');
-    const files = fs.readdirSync(tempDir); // 디렉토리 내 파일 목록 가져오기
+    // 로컬 폴더 정리
+    if (fs.existsSync(outputDir)) {
+      fs.rmSync(outputDir, { recursive: true, force: true });
+    }
+    console.log('Temporary frames cleaned up.');
 
-    files.forEach((file) => {
-      const filePath = path.join(tempDir, file);
-      try {
-        fs.unlinkSync(filePath);
-        console.log(`Deleted temporary file: ${filePath}`);
-      } catch (err) {
-        console.error(`Failed to delete file: ${filePath}`, err);
-      }
+    // video 폴더 정리
+    if (fs.existsSync(videoDir)) {
+      fs.readdirSync(videoDir).forEach((file) => {
+        const filePath = path.join(videoDir, file);
+        try {
+          fs.unlinkSync(filePath);
+          console.log(`Deleted video file: ${filePath}`);
+        } catch (error) {
+          console.error(`Failed to delete video file: ${filePath}`, error);
+        }
+      });
+    }
+
+    res.status(200).json({
+      message: 'File uploaded successfully',
+      videoPath: videoResult.Location,
+      imagePaths: successfulUploads,
     });
-
-    res.status(200).json({ message: 'File uploaded successfully', path: result.Location });
   } catch (error) {
     console.error('Upload process error:', error);
     res.status(500).json({ message: 'Upload error', error: error.message });
