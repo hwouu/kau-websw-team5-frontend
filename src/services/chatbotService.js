@@ -61,6 +61,8 @@ export const generateCaseId = async (accidentType) => {
 
 export const createReportData = async (reportData) => {
     try {
+        console.log('Creating report with data:', reportData); // 디버깅용 로그
+
         const newReport = await prisma.reports.create({
             data: {
                 report_id: reportData.report_id,
@@ -73,12 +75,16 @@ export const createReportData = async (reportData) => {
                 analysis_status: '분석중',
             },
         });
+
+        console.log('Report created successfully:', newReport); // 성공 로그
         return newReport;
     } catch (error) {
-        console.error('Error in createReportData:', error.message);
-        throw new Error('데이터베이스 저장 실패');
+        console.error('Error in createReportData:', error.message); // 오류 메시지
+        console.error('Error details:', error); // 전체 오류 객체 출력
+        throw new Error(`데이터베이스 저장 실패: ${error.message}`); // 구체적인 오류 반환
     }
 };
+
 
 //추가
 
