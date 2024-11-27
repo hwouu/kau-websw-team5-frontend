@@ -49,10 +49,7 @@ jobs:
             cd traffic-incident-analysis-backend || exit 1
             git pull || exit 1
             npm install --maxsockets=5 || exit 1
-            npx prisma migrate resolve --applied 20241127154352_init || true
-            npx prisma db push || exit 1
-            npx prisma migrate deploy || exit 1
-            npx prisma generate || exit 1
+            npx prisma migrate || exit 1
             if pm2 list | grep -q traffic-incident-analysis; then
               pm2 delete traffic-incident-analysis || true
             fi
