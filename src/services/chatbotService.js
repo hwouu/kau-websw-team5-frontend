@@ -61,7 +61,13 @@ export const generateCaseId = async (accidentType) => {
 
 export const createReportData = async (reportData) => {
     try {
-        console.log('Creating report with data:', reportData); // 디버깅용 로그
+        console.log('Original reportData:', reportData); // 디버깅: 원본 데이터 확인
+
+        // `date`는 YYYY-MM-DD, `time`은 HH:mm:ss 형식
+        const parsedDate = new Date(reportData.date); // Prisma에서 MySQL DATE와 호환
+        const parsedTime = reportData.time; // TIME은 그대로 사용 가능
+
+        console.log('Parsed Data for Prisma:', { parsedDate, parsedTime }); // 디버깅용
 
         const newReport = await prisma.reports.create({
             data: {
@@ -70,8 +76,8 @@ export const createReportData = async (reportData) => {
                 case_id: reportData.case_id,
                 accident_type: reportData.accident_type,
                 location: reportData.location,
-                date: reportData.date,
-                time: reportData.time,
+                date: parsedDate, // ISO-8601 형식으로 Prisma에 전달
+                time: parsedTime, // 그대로 전달
                 analysis_status: '분석중',
             },
         });
@@ -79,13 +85,11 @@ export const createReportData = async (reportData) => {
         console.log('Report created successfully:', newReport); // 성공 로그
         return newReport;
     } catch (error) {
-        console.error('Error in createReportData:', error.message); // 오류 메시지
+        console.error('Error in createReportData:', error.message); // 오류 메시지 출력
         console.error('Error details:', error); // 전체 오류 객체 출력
         throw new Error(`데이터베이스 저장 실패: ${error.message}`); // 구체적인 오류 반환
     }
 };
-
-
 //추가
 
 
