@@ -45,3 +45,28 @@ model Upload {
   uploadedAt DateTime @default(now())
   user       User     @relation(fields: [userID], references: [userID])
 }
+
+model Reports {
+  report_id       String    @id 
+  user_id         Int       
+  case_id         String    
+  accident_type   String?   
+  location        String    
+  date            DateTime  
+  time            DateTime  
+  analysis_status String    @default("분석중") 
+  accident_name   String?   
+  vehicle_1_type  String?   
+  vehicle_1_color String?   
+  vehicle_2_type  String?   
+  vehicle_2_color String?   
+  accident_detail String?   
+  created_at      DateTime  @default(now()) 
+  updated_at      DateTime  @updatedAt 
+
+  // User와의 관계 정의
+  User            User      @relation(fields: [user_id], references: [userID])
+
+  @@index([user_id], map: "idx_user_id") // 사용자별 조회를 위한 인덱스
+  @@index([analysis_status], map: "idx_status") // 상태별 필터링을 위한 인덱스
+}
