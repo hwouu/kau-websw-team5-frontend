@@ -47,10 +47,9 @@ jobs:
         run: |
           ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_PUBLIC_IP }} "
             cd traffic-incident-analysis-backend || exit 1
-            git reset --hard HEAD || exit 1 
             git pull || exit 1
             npm install || exit 1
-            npx prisma db push || exit 1
+            npx prisma migrate deploy || exit 1
             npx prisma generate || exit 1
             if pm2 list | grep -q traffic-incident-analysis; then
               pm2 delete traffic-incident-analysis || true
