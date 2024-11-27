@@ -47,7 +47,9 @@ jobs:
         run: |
           ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_PUBLIC_IP }} "
             cd traffic-incident-analysis-backend || exit 1
+            git stash || true
             git pull || exit 1
+            git stash pop || true
             npm install || exit 1
             npx prisma migrate deploy || exit 1
             npx prisma generate || exit 1
