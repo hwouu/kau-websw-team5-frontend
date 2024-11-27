@@ -26,6 +26,7 @@ model User {
 
   recordings    Recording[] // User가 여러 Recording을 가질 수 있음
   uploads       Upload[] // User가 여러 Upload를 가질 수 있음
+  reports       Reports[] // User가 여러 Reports를 가질 수 있음
 }
 
 model Recording {
