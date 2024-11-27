@@ -63,9 +63,11 @@ export const createReportData = async (reportData) => {
     try {
         console.log('Original reportData:', reportData); // 디버깅: 원본 데이터 확인
 
-        // `date`는 YYYY-MM-DD, `time`은 HH:mm:ss 형식
+        // `date`는 YYYY-MM-DD 형식, `time`은 HH:mm:ss 형식
         const parsedDate = new Date(reportData.date); // Prisma에서 MySQL DATE와 호환
-        const parsedTime = reportData.time; // TIME은 그대로 사용 가능
+        const [hours, minutes, seconds] = reportData.time.split(':'); // HH:mm:ss 분리
+        const parsedTime = new Date(parsedDate); // 날짜와 시간을 결합
+        parsedTime.setHours(hours, minutes, seconds); // 시간 설정
 
         console.log('Parsed Data for Prisma:', { parsedDate, parsedTime }); // 디버깅용
 
@@ -77,7 +79,7 @@ export const createReportData = async (reportData) => {
                 accident_type: reportData.accident_type,
                 location: reportData.location,
                 date: parsedDate, // ISO-8601 형식으로 Prisma에 전달
-                time: parsedTime, // 그대로 전달
+                time: parsedTime, // ISO-8601 형식으로 변환된 시간
                 analysis_status: '분석중',
             },
         });
@@ -90,6 +92,7 @@ export const createReportData = async (reportData) => {
         throw new Error(`데이터베이스 저장 실패: ${error.message}`); // 구체적인 오류 반환
     }
 };
+
 //추가
 
 
