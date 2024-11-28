@@ -12,4 +12,4 @@ ALTER TABLE `reports` ADD COLUMN `fileType` VARCHAR(191) NULL,
     ADD COLUMN `fileUrl` JSON NULL;
 
 -- DropTable
-DROP TABLE `upload`;
+DROP TABLE IF EXISTS `upload`;

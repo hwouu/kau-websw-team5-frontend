@@ -8,4 +8,4 @@
 ALTER TABLE `recording` DROP FOREIGN KEY `Recording_userID_fkey`;
 
 -- DropTable
-DROP TABLE `recording`;
+DROP TABLE IF EXISTS `recording`;
