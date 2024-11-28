@@ -9,7 +9,7 @@ const router = express.Router();
 router.use(authMiddleware); 
 
 // 웹캠 녹화영상 업로드 라우트 
-router.post('/upload', upload.single('video'), uploadRecording); 
+router.put('/upload', upload.single('video'), uploadRecording); 
 
 export default router;
 

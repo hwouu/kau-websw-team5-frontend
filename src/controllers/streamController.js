@@ -78,12 +78,6 @@ export const uploadRecording = async (req, res) => {
     }
     console.log('Temporary frames cleaned up.');
 
-    res.status(200).json({
-      message: 'File uploaded successfully',
-      videoPath: videoResult.Location,
-      imagePaths: successfulUploads,
-    });
-
     // video 폴더 정리
     if (fs.existsSync(videoDir)) {
       fs.readdirSync(videoDir).forEach((file) => {
@@ -96,6 +90,11 @@ export const uploadRecording = async (req, res) => {
         }
       });
     }
+
+    res.status(200).json({
+      message: 'File processed and uploaded successfully',
+      updatedReport,
+    });
   } catch (error) {
     console.error('Upload process error:', error);
     res.status(500).json({ message: 'Upload error', error: error.message });

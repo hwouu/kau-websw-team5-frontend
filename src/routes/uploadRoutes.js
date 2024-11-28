@@ -10,6 +10,6 @@ const router = express.Router();
 router.use(authMiddleware);
 
 // 파일 업로드 라우트 (최대 6개 파일 업로드)
-router.post('/upload', upload.array('files'), validateFile, handleFileUpload);
+router.put('/upload', upload.array('files'), validateFile, handleFileUpload);
 
 export default router;
