@@ -44,7 +44,8 @@ model Reports {
   accident_detail String?
 
   fileUrl         Json? // 업로드된 파일 URL
-  fileType        String? // 파일 타입 (image/video)   
+  fileType        String? // 파일 타입 (image/video)
+  description     String? // 보고서 출력 내용 (반환 내용)
   created_at      DateTime  @default(now()) 
   updated_at      DateTime  @updatedAt 
 
