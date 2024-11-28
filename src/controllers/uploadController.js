@@ -1,15 +1,15 @@
 import prisma from '../config/prismaClient.js';
-import { uploadToS3ImageVideo } from '../services/s3Service.js';
+import { uploadToS3 } from '../services/s3Service.js';
 import fs from 'fs';
 import path from 'path';
 
 export const handleFileUpload = async (req, res) => {
   try {
     const files = req.files;
-    const userID = req.user?.userId; // 사용자 ID 추출 (req.user에서 가져옴)
+    const { userId, reportId } = req.body; // userID와 reportID를 요청에서 추출
 
-    if (!userID) {
-      return res.status(400).json({ message: '사용자 ID가 필요합니다.' });
+    if (!userId || !reportId) {
+      return res.status(400).json({ message: 'userID와 reportID가 필요합니다.' });
     }
 
     // MIME타입에 따라 경로를 반환하는 함수
@@ -22,7 +22,7 @@ export const handleFileUpload = async (req, res) => {
     const fileUrls = await Promise.all(
       files.map(async (file) => {
         const folder = folderName(file.mimetype);
-        const result = await uploadToS3ImageVideo(file, folder);
+        const result = await uploadToS3(file, folder);
 
         fs.unlinkSync(file.path);
 
@@ -30,12 +30,15 @@ export const handleFileUpload = async (req, res) => {
       })
     );
 
-    // 데이터베이스에 업로드 데이터 저장
-    await prisma.upload.create({
+    // 파일 타입 설정
+    const fileType = files[0]?.mimetype.split('/')[0];
+
+    // 데이터베이스 업데이트
+    const updatedReport = await prisma.reports.update({
+      where: { report_id: reportId },
       data: {
-        filePath: fileUrls, // URL 배열을 JSON 형태로 저장
-        fileType: files[0].mimetype.split('/')[0], // 파일 타입 저장 (image/video 등)
-        userID, // userID 저장
+        fileUrl: fileUrls, // URL 배열을 JSON 형태로 저장
+        fileType, // 파일 타입 저장
       },
     });
 
@@ -57,7 +60,7 @@ export const handleFileUpload = async (req, res) => {
     });
     
 
-    res.status(200).json({ message: '파일 업로드 성공!', files: fileUrls });
+    res.status(200).json({ message: '파일 업로드 성공!', report: updatedReport  });
   } catch (error) {
     console.error('파일 업로드 오류:', error);
     res.status(500).json({ message: '파일 업로드 실패', error: error.message });

@@ -24,32 +24,11 @@ model User {
   adminToken    String?
   createdAt     DateTime  @default(now())
 
-  recordings    Recording[] // User가 여러 Recording을 가질 수 있음
-  uploads       Upload[] // User가 여러 Upload를 가질 수 있음
   reports       Reports[] // User가 여러 Reports를 가질 수 있음
 }
 
-model Recording {
-  id        Int      @id @default(autoincrement())
-  userID    Int 
-  filePath  String
-  imageUrl  Json
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userID], references: [userID])
-}
-
-//파일 업로드를 위한 모델 추가
-model Upload {
-  id         Int      @id @default(autoincrement())
-  userID     Int
-  filePath   Json // 배열 형태의 파일 경로 저장
-  fileType   String
-  uploadedAt DateTime @default(now())
-  user       User     @relation(fields: [userID], references: [userID])
-}
-
 model Reports {
-  report_id       String    @id 
+  report_id       String    @id
   user_id         Int       
   case_id         String    
   accident_type   String?   
@@ -62,7 +41,10 @@ model Reports {
   vehicle_1_color String?   
   vehicle_2_type  String?   
   vehicle_2_color String?   
-  accident_detail String?   
+  accident_detail String?
+
+  fileUrl         Json? // 업로드된 파일 URL
+  fileType        String? // 파일 타입 (image/video)   
   created_at      DateTime  @default(now()) 
   updated_at      DateTime  @updatedAt 
 

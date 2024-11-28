@@ -121,6 +121,8 @@
       const blob = new Blob(recordedChunks, { type: 'video/mp4' });
       const formData = new FormData();
       formData.append('video', blob, 'recording.mp4');
+      formData.append('reportId', 'report_002'); // report_id 추가
+      formData.append('userId', '1'); // 사용자 ID (예: 1)
 
       fetch('/api/stream/upload', {
         method: 'POST',
@@ -129,8 +131,14 @@
         },
         body: formData,
       }).then(response => response.json())
-        .then(data => console.log('File saved:', data))
-        .catch(console.error);
+        .then(data => {
+          console.log('File saved:', data);
+          alert('File uploaded successfully!');
+        })
+        .catch(error => {
+          console.error('Upload error:', error);
+          alert('Failed to upload file.');
+        });
 
       recordedChunks = []; 
       startButton.disabled = false;

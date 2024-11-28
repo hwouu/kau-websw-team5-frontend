@@ -10,12 +10,17 @@ export const uploadRecording = async (req, res) => {
       return res.status(400).json({ message: 'No file uploaded', error: 'File is required' });
     }
 
+    const { reportId, userId } = req.body;
+
+    if (!reportId || !userId) {
+      return res.status(400).json({ message: 'reportId와 userId가 필요합니다.' });
+    }
+
     const folderName = 'recordings/';
     const videoResult = await uploadToS3(req.file, folderName);
 
     const videoPath = req.file.path;
     const outputDir = path.join('public', 'recordings', 'frames');
-    const videoDir = path.join('public', 'video'); // 로컬 video 디렉토리
     const frameCount = 6;
 
     // 캡처 이미지 생성
@@ -57,34 +62,20 @@ export const uploadRecording = async (req, res) => {
 
     console.log('Successfully uploaded images:', successfulUploads);
 
-    // DB 저장
-    await prisma.recording.create({
+    //  DB 업데이트: Reports 테이블
+    const updatedReport = await prisma.reports.update({
+      where: { report_id: reportId },
       data: {
-        filePath: videoResult.Location,
-        imageUrl: successfulUploads,
-        createdAt: new Date(),
-        userID: req.user.userId,
+        fileUrl: successfulUploads, // 캡처된 이미지 URL 배열 저장
+        fileType: 'image',         // 항상 "image"
       },
     });
 
-    // 로컬 폴더 정리
+    // 로컬 임시 파일 정리
     if (fs.existsSync(outputDir)) {
       fs.rmSync(outputDir, { recursive: true, force: true });
     }
     console.log('Temporary frames cleaned up.');
-
-    // video 폴더 정리
-    if (fs.existsSync(videoDir)) {
-      fs.readdirSync(videoDir).forEach((file) => {
-        const filePath = path.join(videoDir, file);
-        try {
-          fs.unlinkSync(filePath);
-          console.log(`Deleted video file: ${filePath}`);
-        } catch (error) {
-          console.error(`Failed to delete video file: ${filePath}`, error);
-        }
-      });
-    }
 
     res.status(200).json({
       message: 'File uploaded successfully',
