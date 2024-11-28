@@ -1,5 +1,5 @@
 import prisma from '../config/prismaClient.js';
-import { uploadToS3 } from '../services/s3Service.js';
+import { uploadToS3ImageVideo } from '../services/s3Service.js';
 import fs from 'fs';
 import path from 'path';
 
@@ -22,7 +22,7 @@ export const handleFileUpload = async (req, res) => {
     const fileUrls = await Promise.all(
       files.map(async (file) => {
         const folder = folderName(file.mimetype);
-        const result = await uploadToS3(file, folder);
+        const result = await uploadToS3ImageVideo(file, folder);
 
         fs.unlinkSync(file.path);
 
