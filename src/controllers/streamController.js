@@ -21,6 +21,7 @@ export const uploadRecording = async (req, res) => {
 
     const videoPath = req.file.path;
     const outputDir = path.join('public', 'recordings', 'frames');
+    const videoDir = path.join('public', 'video'); // 로컬 video 디렉토리
     const frameCount = 6;
 
     // 캡처 이미지 생성
@@ -82,6 +83,19 @@ export const uploadRecording = async (req, res) => {
       videoPath: videoResult.Location,
       imagePaths: successfulUploads,
     });
+
+    // video 폴더 정리
+    if (fs.existsSync(videoDir)) {
+      fs.readdirSync(videoDir).forEach((file) => {
+        const filePath = path.join(videoDir, file);
+        try {
+          fs.unlinkSync(filePath);
+          console.log(`Deleted video file: ${filePath}`);
+        } catch (error) {
+          console.error(`Failed to delete video file: ${filePath}`, error);
+        }
+      });
+    }
   } catch (error) {
     console.error('Upload process error:', error);
     res.status(500).json({ message: 'Upload error', error: error.message });
