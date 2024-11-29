@@ -10,9 +10,9 @@ export const validateFile = (req, res, next) => {
     return res.status(400).json({ message: '이미지와 영상은 동시에 업로드할 수 없습니다.' });
   }
 
-  // 이미지 파일 제한: 최대 6개
-  if (imageFiles.length > 6) {
-    return res.status(400).json({ message: '이미지는 최대 6개까지 업로드할 수 있습니다.' });
+  // 이미지 파일 제한: 최소 4개, 최대 6개
+  if (imageFiles.length > 0 && (imageFiles.length < 4 || imageFiles.length > 6)) {
+    return res.status(400).json({ message: '이미지는 최소 4개에서 최대 6개까지 업로드할 수 있습니다.' });
   }
 
   // 영상 파일 제한: 최대 1개
