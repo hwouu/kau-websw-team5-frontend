@@ -82,3 +82,28 @@ export const reportAccident = async (req, res) => {
         res.status(500).json({ message: 'Failed to report accident.', error });
     }
 };
+
+// 추가 11/29
+export const handleUserMessage = async (req, res) => {
+    const { userMessage, endConversation } = req.body; // `endConversation` 플래그 추가
+    const userID = req.user?.userId; // 사용자 ID 가져오기
+  
+    if (!userID) {
+      return res.status(400).json({ error: "User not authenticated" });
+    }
+  
+    try {
+      if (endConversation) {
+        // 대화 종료 요청 시 문맥 초기화
+        chatbotService.resetContext(userID);
+        return res.json({ message: "Conversation ended and context reset." });
+      }
+  
+      // 메시지 처리
+      const botMessage = await chatbotService.processMessage(userMessage, userID);
+      res.json({ botMessage });
+    } catch (error) {
+      console.error("Error in handleUserMessage:", error);
+      res.status(500).json({ error: "Failed to process chatbot message" });
+    }
+  };
