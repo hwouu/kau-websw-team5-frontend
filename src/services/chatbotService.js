@@ -10,6 +10,16 @@ console.log('CHATGPT_API_KEY:', process.env.CHATGPT_API_KEY);
 const CHATGPT_API_URL = 'https://api.openai.com/v1/chat/completions';
 const CHATGPT_API_KEY = process.env.CHATGPT_API_KEY;
 
+
+// 사용자별 대화 문맥 저장 객체
+const userContexts = {};
+
+// 대화 문맥 초기화 함수
+export const resetContext = (userID) => {
+  delete userContexts[userID]; // 특정 사용자의 문맥 삭제
+};
+  
+
 // 추가
 export const generateReportId = async () => {
     const lastReport = await prisma.report.findFirst({
@@ -131,3 +141,63 @@ export async function createReport({ time, location, vehicleNumber, description,
     }
 }
 
+// OpenAI 메시지 처리 함수
+export const processMessage = async (userMessage, userID) => {
+    try {
+      // 사용자 문맥 가져오기, 없으면 초기화
+      if (!userContexts[userID]) {
+        userContexts[userID] = [
+          {
+            role: "system",
+            content: `
+                당신은 사고 분석 및 상태 보고를 위한 전문 챗봇입니다.
+                다음 규칙을 반드시 따르세요:
+                1. 사용자의 질문에 특정 지역 정보가 포함되어 있다면, 문맥을 확인 한 후에 문맥과 관련이 있다면 이전 대화 기록에서 해당 지역 정보와 관련된 데이터를 확인하고 답변합니다.
+                - 예: "남청주 나들목 상행선에서 사고 발생이 의심됩니다" → "남청주 나들목 상행선에서 사고 발생이 확인되었습니다."
+                2. 사용자가 다른 지역 정보를 질문할 경우, 이전 대화 기록과 충돌하지 않는 응답을 제공합니다.
+                - 예: "남청주 사고를 물어봤는데 테헤란로 사고는 어떤가요?" → "테헤란로 사고 정보는 별도로 기록되어 있지 않습니다."
+                3. 사용자가 보고한 지역에 대한 사고에 한에서 사고 처리에 관한 내용을 묻는다면 반드시 "현재 사고처리중에 있습니다." 라는 고정된 답변을 줘. 
+                만약 사고자가 보고한 지역에 대한 사고가 아니라면 반드시 "해당 지역에서 발생한 사고는 없습니다" 라는 고정된 답변을 줘.
+                4. 문맥과 관련 없는 질문에는 "문맥에 맞는 질문을 다시 작성해 주세요."라고 명확히 알려줍니다.
+            `,
+          },
+        ];
+      }
+  
+      // 사용자 메시지 추가
+      userContexts[userID].push({ role: "user", content: userMessage });
+  
+      // OpenAI API 호출
+      const response = await axios.post(
+        CHATGPT_API_URL,
+        {
+          model: "gpt-4",
+          messages: userContexts[userID],
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${CHATGPT_API_KEY}`,
+          },
+        }
+      );
+  
+      // OpenAI 응답 추가
+      const botMessage = response.data.choices[0].message.content;
+      userContexts[userID].push({ role: "assistant", content: botMessage });
+
+      // 로그로 현재 contextMessages 출력
+      console.log(`[User ID: ${userID}] Current contextMessages:`, userContexts[userID]);
+
+  
+      return botMessage;
+    } catch (error) {
+      console.error("Error in processMessage:", error);
+      throw new Error("Failed to process message with OpenAI API");
+    }
+  };
+  
+  // 문맥 초기화 시점에 호출하는 함수
+  export const endConversation = (userID) => {
+    resetContext(userID);
+  };
