@@ -10,10 +10,9 @@ export const createReport = async (req, res) => {
     try {
         const userID = req.user?.userId;
         const report_id = await chatbotService.generateReportId();
-        const case_id = await chatbotService.generateCaseId(req.body.accident_type);
-        const reportData = { ...req.body, user_id: userID, report_id, case_id };
+        const reportData = { ...req.body, user_id: userID, report_id };
 
-        if (!reportData.report_id || !reportData.case_id || !reportData.location || !reportData.date || !reportData.time || !reportData.accident_type) {
+        if (!reportData.report_id || !reportData.location || !reportData.date || !reportData.time || !reportData.accident_type) {
             return res.status(400).json({ message: '모든 필수 필드를 입력해주세요.' });
         }
 
