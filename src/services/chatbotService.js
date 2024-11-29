@@ -12,7 +12,7 @@ const CHATGPT_API_KEY = process.env.CHATGPT_API_KEY;
 
 // 추가
 export const generateReportId = async () => {
-    const lastReport = await prisma.reports.findFirst({
+    const lastReport = await prisma.report.findFirst({
         orderBy: { created_at: 'desc' },
         select: { report_id: true },
     });
@@ -28,37 +28,6 @@ export const generateReportId = async () => {
     return `#R${String(newId).padStart(4, '0')}`;
 };
 
-export const generateCaseId = async (accidentType) => {
-    const typeMap = {
-        '전복사고': 'A',
-        '추돌사고': 'B',
-        '접촉사고': 'C',
-        '기타': 'D'
-    };
-
-    const typeCode = typeMap[accidentType] || 'D';
-
-    const lastCase = await prisma.reports.findFirst({
-        where: {
-            case_id: {
-                startsWith: `#${typeCode}`,
-            },
-        },
-        orderBy: { created_at: 'desc' },
-        select: { case_id: true },
-    });
-
-    if (!lastCase) {
-        return `#${typeCode}0001`;
-    }
-
-    const lastId = lastCase.case_id;
-    const numericPart = parseInt(lastId.slice(2));
-    const newId = numericPart + 1;
-
-    return `#${typeCode}${String(newId).padStart(4, '0')}`;
-};
-
 export const createReportData = async (reportData) => {
     try {
         console.log('Original reportData:', reportData); // 디버깅: 원본 데이터 확인
@@ -71,16 +40,14 @@ export const createReportData = async (reportData) => {
 
         console.log('Parsed Data for Prisma:', { parsedDate, parsedTime }); // 디버깅용
 
-        const newReport = await prisma.reports.create({
+        const newReport = await prisma.report.create({
             data: {
                 report_id: reportData.report_id,
                 user_id: reportData.user_id,
-                case_id: reportData.case_id,
                 accident_type: reportData.accident_type,
                 location: reportData.location,
                 date: parsedDate, // ISO-8601 형식으로 Prisma에 전달
-                time: parsedTime, // ISO-8601 형식으로 변환된 시간
-                analysis_status: '분석중',
+                time: parsedTime // ISO-8601 형식으로 변환된 시간
             },
         });
 
@@ -163,3 +130,4 @@ export async function createReport({ time, location, vehicleNumber, description,
         throw new Error('Error creating report: ' + error.message);
     }
 }
+
