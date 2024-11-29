@@ -24,7 +24,7 @@ model User {
   adminToken    String?
   createdAt     DateTime  @default(now())
 
-  reports       Reports[] // User가 여러 Reports를 가질 수 있음
+  reports       Report[] // User가 여러 Reports를 가질 수 있음
 }
 
 model Report {
