@@ -37,7 +37,7 @@ model Report {
   damaged_situation Json?                    // 피해 상황 (JSON 형식)
   number_of_vehicle Int                      // 사고에 연관된 차량 수
   vehicle         Json?                      // 차량 정보 (JSON 형식)
-  description     String?                    // 사고 상세 설명
+  description     String?   @db.Text         // 사고 상세 설명
   fileUrl         Json?                      
   fileType        String?                    
   created_at      DateTime  @default(now())  
