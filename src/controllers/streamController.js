@@ -17,8 +17,6 @@ export const uploadRecording = async (req, res) => {
     }
 
     const folderName = 'recordings/';
-    const videoResult = await uploadToS3(req.file, folderName);
-
     const videoPath = req.file.path;
     const outputDir = path.join('public', 'recordings', 'frames');
     const videoDir = path.join('public', 'video'); // 로컬 video 디렉토리
@@ -64,7 +62,7 @@ export const uploadRecording = async (req, res) => {
     console.log('Successfully uploaded images:', successfulUploads);
 
     //  DB 업데이트: Reports 테이블
-    const updatedReport = await prisma.reports.update({
+    const updatedReport = await prisma.report.update({
       where: { report_id: reportId },
       data: {
         fileUrl: successfulUploads, // 캡처된 이미지 URL 배열 저장
@@ -90,7 +88,6 @@ export const uploadRecording = async (req, res) => {
         }
       });
     }
-
     res.status(200).json({
       message: 'File processed and uploaded successfully',
       updatedReport,

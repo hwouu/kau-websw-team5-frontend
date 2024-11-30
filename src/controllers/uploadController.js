@@ -34,7 +34,7 @@ export const handleFileUpload = async (req, res) => {
     const fileType = files[0]?.mimetype.split('/')[0];
 
     // 데이터베이스 업데이트
-    const updatedReport = await prisma.reports.update({
+    const updatedReport = await prisma.report.update({
       where: { report_id: reportId },
       data: {
         fileUrl: fileUrls, // URL 배열을 JSON 형태로 저장
