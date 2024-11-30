@@ -1,7 +1,7 @@
 import express from 'express';
 import multer from 'multer';
 import { authMiddleware } from '../middlewares/authMiddleware.js';
-import { getWelcomeMessage, createReport, analyzeAccident, reportAccident, handleUserMessage } from '../controllers/chatbotController.js';
+import { getWelcomeMessage, createReport, analyzeAccident, reportAccident, handleUserMessage, sendToLLMAndUpdateDescription } from '../controllers/chatbotController.js';
 
 // 파일 업로드 설정
 const upload = multer({ dest: 'uploads/' });
@@ -22,6 +22,9 @@ router.post('/analyze', analyzeAccident);
 
 // 추가 11/29
 router.post("/chat", handleUserMessage);
+
+// LLM 서버 데이터 전송 및 응답
+router.post("/update-description", sendToLLMAndUpdateDescription);
 
 
 

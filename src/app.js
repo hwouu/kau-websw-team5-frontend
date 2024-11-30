@@ -8,6 +8,7 @@ import { fileURLToPath } from 'url';
 import cors from 'cors';
 import uploadRoutes from './routes/uploadRoutes.js';
 import chatbotRoutes from './routes/chatbotRoutes.js';
+import reportRoutes from './routes/reportRoutes.js';
 import { redirectIfAuthenticated } from './middlewares/authMiddleware.js';
 
 const corsOptions = {
@@ -34,6 +35,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/stream', streamRoutes);
 app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/files', uploadRoutes);
+app.use('/api/report', reportRoutes);
 
 app.use(errorHandler); // 전역 에러 핸들링 미들웨어 등록
 
