@@ -16,6 +16,20 @@ export const uploadRecording = async (req, res) => {
       return res.status(400).json({ message: 'reportId와 userId가 필요합니다.' });
     }
 
+    // 토큰에서 추출한 사용자 ID와 요청에서 전달된 userId 비교
+    if (req.user.userId !== parseInt(userId, 10)) {
+      return res.status(403).json({ message: '권한이 없습니다. 요청한 userId가 토큰과 일치하지 않습니다.' });
+    }
+
+    // DB에서 reportId 존재 여부 확인
+    const reportExists = await prisma.report.findUnique({
+      where: { report_id: reportId },
+    });
+
+    if (!reportExists) {
+      return res.status(404).json({ message: '해당 reportId가 존재하지 않습니다.' });
+    }
+
     const folderName = 'recordings/';
     const videoPath = req.file.path;
     const outputDir = path.join('public', 'recordings', 'frames');
