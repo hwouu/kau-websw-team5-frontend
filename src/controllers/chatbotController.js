@@ -8,6 +8,7 @@ export const getWelcomeMessage = (req, res) => {
     });
 }
 
+// 삭제
 export const createReport = async (req, res) => {
     try {
         const userID = req.user?.userId;
@@ -33,6 +34,7 @@ export const createReport = async (req, res) => {
 export const analyzeAccident = async (req, res) => {
     try {
         const { description } = req.body;
+        const userId = req.user?.userId; // 사용자 ID 가져오기
 
         // 요청 본문 유효성 검사
         if (!description) {
@@ -41,13 +43,28 @@ export const analyzeAccident = async (req, res) => {
             });
         }
 
+        if (!userId) {
+            return res.status(401).json({
+                message: '로그인이 필요합니다.',
+            });
+        }
+
         // ChatGPT API 호출
         const structuredData = await chatbotService.getChatGPTAnalysis(description);
 
+        // `structuredData.분석결과`에서 필요한 데이터 추출
+        const { 사고날짜: date, 사고시간: time, 사고장소: location } = structuredData.분석결과;
+
+        // 보고서 생성
+        const reportResponse = await chatbotService.createReport(userId, { date, time, location });
+
         // 결과 반환
         res.status(200).json({
-            message: '분석 성공',
-            data: structuredData,
+            message: '분석 성공 및 보고서 생성 성공',
+            data: {
+                analysis: structuredData,
+                report: reportResponse,
+            },
         });
     } catch (error) {
         console.error('Controller Error:', error.message);
