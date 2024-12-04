@@ -1,9 +1,9 @@
+import dotenv from 'dotenv';
 import prisma from '../config/prismaClient.js';
 import axios from 'axios';
 import path from 'path';
-import dotenv from 'dotenv';
 
-dotenv.config();
+dotenv.config({ override: true });
 
 console.log('CHATGPT_API_KEY:', process.env.CHATGPT_API_KEY);
 
@@ -18,63 +18,13 @@ const userContexts = {};
 export const resetContext = (userID) => {
   delete userContexts[userID]; // 특정 사용자의 문맥 삭제
 };
-  
-
-// 추가
-export const generateReportId = async () => {
-    const lastReport = await prisma.report.findFirst({
-        orderBy: { created_at: 'desc' },
-        select: { report_id: true },
-    });
-
-    if (!lastReport) {
-        return '#R0001';
-    }
-
-    const lastId = lastReport.report_id;
-    const numericPart = parseInt(lastId.slice(2));
-    const newId = numericPart + 1;
-
-    return `#R${String(newId).padStart(4, '0')}`;
-};
-
-export const createReportData = async (reportData) => {
-    try {
-        console.log('Original reportData:', reportData); // 디버깅: 원본 데이터 확인
-
-        // `date`는 YYYY-MM-DD 형식, `time`은 HH:mm:ss 형식
-        const parsedDate = new Date(reportData.date); // Prisma에서 MySQL DATE와 호환
-        const [hours, minutes, seconds] = reportData.time.split(':'); // HH:mm:ss 분리
-        const parsedTime = new Date(parsedDate); // 날짜와 시간을 결합
-        parsedTime.setHours(hours, minutes, seconds); // 시간 설정
-
-        console.log('Parsed Data for Prisma:', { parsedDate, parsedTime }); // 디버깅용
-
-        const newReport = await prisma.report.create({
-            data: {
-                report_id: reportData.report_id,
-                user_id: reportData.user_id,
-                accident_type: reportData.accident_type,
-                location: reportData.location,
-                date: parsedDate, // ISO-8601 형식으로 Prisma에 전달
-                time: parsedTime // ISO-8601 형식으로 변환된 시간
-            },
-        });
-
-        console.log('Report created successfully:', newReport); // 성공 로그
-        return newReport;
-    } catch (error) {
-        console.error('Error in createReportData:', error.message); // 오류 메시지 출력
-        console.error('Error details:', error); // 전체 오류 객체 출력
-        throw new Error(`데이터베이스 저장 실패: ${error.message}`); // 구체적인 오류 반환
-    }
-};
 
 //추가
-
-
 export const getChatGPTAnalysis = async (description) => {
     try {
+
+        const currentDate = new Date().toISOString();
+
         const response = await axios.post(
             CHATGPT_API_URL,
             {
@@ -83,15 +33,17 @@ export const getChatGPTAnalysis = async (description) => {
                     {
                         role: 'system',
                         content: `당신은 교통사고 신고를 분석하는 도우미입니다.
+                                  현재 날짜와 시간은 "${currentDate}"입니다.
+                                  사용자가 상대적인 날짜나 시간(예: '오늘', '어제', '이번 주')을 입력하면, 이를 절대적인 날짜와 시간(YYYY-MM-DD, HH:mm:ss)으로 변환하세요.
                                   사용자의 사고 설명을 분석한 뒤, JSON 형식으로 구조화된 데이터를 반환하십시오.
+                                  반환되는 날짜와 시간의 형식은 반드시 "YYYY-MM-DD"와 "HH:mm:ss"로 고정해야 합니다.
                                   이후, 사용자가 사고 상황에 대한 추가적인 자료(이미지, 동영상, 실시간 스트리밍 영상)를 제공할 수 있는지 묻는 질문을 생성하십시오.
                                   JSON 형식 예시:
                                   {
                                       "분석결과": {
-                                          "사고일자": "~",
+                                          "사고날짜": "~",
+                                          "사고시간": "~",
                                           "사고장소": "~",
-                                          "사고내용": "~",
-                                          "사상자": "~"
                                       },
                                       "추가질문": "사고 상황을 보다 정확히 분석하기 위해 이미지, 동영상 또는 실시간 스트리밍 영상이 있나요?"
                                   }
@@ -111,6 +63,14 @@ export const getChatGPTAnalysis = async (description) => {
             }
         );
 
+        // ChatGPT 응답 데이터 콘솔 출력
+        const content = response?.data?.choices?.[0]?.message?.content;
+        console.log('ChatGPT 응답 원본:', content);
+
+        // JSON 파싱 후 반환
+        const parsedContent = JSON.parse(content);
+        console.log('ChatGPT 파싱된 응답:', parsedContent);
+
         // ChatGPT 응답 반환
         return JSON.parse(response.data.choices[0].message.content);
     } catch (error) {
@@ -119,27 +79,58 @@ export const getChatGPTAnalysis = async (description) => {
     }
 };
 
-export async function createReport({ time, location, vehicleNumber, description, gptAnalysis, uploadedFiles }) {
+// 보고서 생성 함수
+export const createReport = async (userId, { date, time, location }) => {
     try {
-        const filePaths = uploadedFiles.map((file) => path.join(__dirname, '../uploads', file.filename));
+        // 기존 보고서 ID 가져오기
+        const lastReport = await prisma.report.findFirst({
+            orderBy: {
+                report_id: 'desc',
+            },
+            select: {
+                report_id: true, // report_id 필드만 조회
+            },
+        });
 
-        const report = {
-            id: Date.now(),
-            time,
-            location,
-            vehicleNumber,
-            description,
-            gptAnalysis,
-            files: filePaths,
+        // 새로운 reportId 생성
+        const nextReportNumber = lastReport
+            ? parseInt(lastReport.report_id.split('_')[1], 10) + 1
+            : 1;
+        const reportId = `report_${String(nextReportNumber).padStart(3, '0')}`;
+
+        // `date`와 `time`을 각각 적절한 형식으로 변환
+        const parsedDate = new Date(date); // `date`는 YYYY-MM-DD 형식이어야 함
+        const parsedTime = new Date(`1970-01-01T${time}`); // `time`은 HH:mm:ss 형식이어야 함
+
+        // 새로운 보고서 생성
+        const newReport = await prisma.report.create({
+            data: {
+                report_id: reportId,
+                user_id: userId,
+                date : parsedDate,
+                time: parsedTime,
+                location,
+                number_of_vehicle: 0, // 기본값 설정
+                accident_type: {"type":"", "severity":""}, 
+                damaged_situation: null, // null 값 저장
+                vehicle: null, // null 값 저장
+                description: null, // null 값 저장
+                fileUrl: null, // null 값 저장
+                fileType: null, // null 값 저장
+            },
+        });
+
+        return {
+            message: '보고서 생성 성공',
+            report: newReport,
         };
-
-        console.log('Generated Report:', report);
-
-        return report;
     } catch (error) {
-        throw new Error('Error creating report: ' + error.message);
+        console.error('Report Creation Error:', error.message);
+        throw new Error('보고서 생성 중 오류가 발생했습니다.');
     }
-}
+};
+     
+   
 
 // OpenAI 메시지 처리 함수
 export const processMessage = async (userMessage, userID) => {
