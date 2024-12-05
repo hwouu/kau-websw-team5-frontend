@@ -1,5 +1,6 @@
 import prisma from '../config/prismaClient.js';
 import { uploadToS3 } from '../services/s3Service.js';
+import { captureFrames } from '../services/captureFrames.js';
 import fs from 'fs';
 import path from 'path';
 
@@ -26,51 +27,70 @@ export const handleFileUpload = async (req, res) => {
       return res.status(404).json({ message: '해당 reportId가 존재하지 않습니다.' });
     }
 
-    // MIME타입에 따라 경로를 반환하는 함수
-    const folderName = (mimeType) => {
-      if (mimeType.startsWith('image/')) return 'images/';
-      if (mimeType.startsWith('video/')) return 'videos/';
-      throw new Error('지원하지 않는 파일 형식입니다.');
-    };
+    const fileUrls = [];
+    const frameCount = 6;
 
-    const fileUrls = await Promise.all(
-      files.map(async (file) => {
-        const folder = folderName(file.mimetype);
+    for (const file of files) {
+      const folder = file.mimetype.startsWith('image/') ? 'images/' : 'videos/';
+      const isVideo = file.mimetype.startsWith('video/');
+      const filePath = file.path;
+
+      if (isVideo) {
+        const videoDir = path.join('public', 'videos'); // 로컬 영상 폴더
+        const outputDir = path.join('public', 'videos', 'frames'); // 프레임 저장 폴더
+
+        // 캡처 이미지 생성
+        const capturedImages = await captureFrames(filePath, outputDir, frameCount);
+
+        // 캡처된 이미지들을 S3에 업로드
+        const imageFolder = `${folder}frames/`;
+        const uploadedImages = await Promise.allSettled(
+          capturedImages.map(async (imagePath) => {
+            if (!fs.existsSync(imagePath)) {
+              console.error(`File not found: ${imagePath}`);
+              return null;
+            }
+            try {
+              const fileName = path.basename(imagePath);
+              const imageResult = await uploadToS3(
+                { path: imagePath, mimetype: 'image/jpeg' },
+                `${imageFolder}${Date.now()}-${fileName}`
+              );
+              fs.unlinkSync(imagePath); // 파일 삭제
+              return imageResult.Location;
+            } catch (error) {
+              console.error(`Failed to upload image: ${imagePath}`, error);
+              return null;
+            }
+          })
+        );
+
+        // 성공한 업로드만 필터링
+        const successfulUploads = uploadedImages
+          .filter((result) => result.status === 'fulfilled' && result.value)
+          .map((result) => result.value);
+
+        fileUrls.push(...successfulUploads);
+
+        // 로컬 임시 파일 정리
+        if (fs.existsSync(outputDir)) {
+          fs.rmSync(outputDir, { recursive: true, force: true });
+        }
+      } else {
         const result = await uploadToS3(file, folder);
+        fileUrls.push(result.Location);
+      }
 
-        fs.unlinkSync(file.path);
+      fs.unlinkSync(filePath); // 업로드 후 로컬 파일 삭제
+    }
 
-        return result.Location; // S3 URL 반환
-      })
-    );
-
-    // 파일 타입 설정
-    const fileType = files[0]?.mimetype.split('/')[0];
-
-    // 데이터베이스 업데이트
+    // DB 업데이트
     const updatedReport = await prisma.report.update({
       where: { report_id: reportId },
       data: {
         fileUrl: fileUrls, // URL 배열을 JSON 형태로 저장
-        fileType, // 파일 타입 저장
+        fileType: 'image', // 파일 타입을 항상 'image'로 설정
       },
-    });
-
-    // 모든 임시 파일 삭제
-    const tempDirs = ['public/image', 'public/video'];
-    tempDirs.forEach((dir) => {
-      if (fs.existsSync(dir)) {
-        const filesInDir = fs.readdirSync(dir); // 디렉토리 내 파일 목록 읽기
-        filesInDir.forEach((file) => {
-          const filePath = path.join(dir, file);
-          try {
-            fs.unlinkSync(filePath); // 파일 삭제
-            console.log(`Deleted temporary file: ${filePath}`);
-          } catch (err) {
-            console.error(`Failed to delete file: ${filePath}`, err);
-          }
-        });
-      }
     });
     
 

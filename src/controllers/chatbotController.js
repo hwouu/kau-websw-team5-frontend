@@ -142,9 +142,9 @@ export const sendToLLMAndUpdateDescription = async (req, res) => {
         /*
         const LLM_API_URL = 'https://external-llm-server.com/analyze'; // 실제 LLM 서버 URL로 변경 필요
         const response = await axios.post(LLM_API_URL, {
-            report_id,
-            fileUrl,
-            fileType,
+            report_id, //string
+            fileUrl, //Json
+            fileType, //string
         });
 
         응답에서 필요한 데이터 추출
