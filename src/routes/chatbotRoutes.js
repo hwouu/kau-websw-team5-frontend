@@ -26,8 +26,6 @@ router.post("/chat", handleUserMessage);
 // LLM 서버 데이터 전송 및 응답
 router.post("/update-description", sendToLLMAndUpdateDescription);
 
-
-
 router.post('/report',upload.array('files'), reportAccident);
 
 export default router; // ES Module 방식으로 export

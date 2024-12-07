@@ -1,6 +1,7 @@
 import * as chatbotService from '../services/chatbotService.js';
 import prisma from '../config/prismaClient.js';
 import axios from 'axios';
+import { analyzeAccidentImages } from '../services/LLMService.js';
 
 export const getWelcomeMessage = (req, res) => {
     res.status(200).json({
@@ -134,56 +135,44 @@ export const sendToLLMAndUpdateDescription = async (req, res) => {
         const { report_id, fileUrl, fileType } = req.body;
 
         // 유효성 검사
-        if (!report_id || !fileUrl || !fileType) {
+        if (!report_id || !fileUrl || !fileType || !Array.isArray(fileUrl)) {
+            console.error("Invalid request body:", req.body);
             return res.status(400).json({ message: '필수 필드 (report_id, fileUrl, fileType)를 모두 입력해주세요.' });
         }
 
-        // 외부 LLM 서버로 데이터 전송
-        /*
-        const LLM_API_URL = 'https://external-llm-server.com/analyze'; // 실제 LLM 서버 URL로 변경 필요
-        const response = await axios.post(LLM_API_URL, {
-            report_id, //string
-            fileUrl, //Json
-            fileType, //string
-        });
+        console.log("Starting LLM analysis for file URLs:", fileUrl);
 
-        응답에서 필요한 데이터 추출
-        const { accident_type, damaged_situation, number_of_vehicle, vehicle, description } = response.data;
-        */
+        // analyzeAccidentImages 함수 호출 시 fileUrl 직접 전달
+        const llmResponse = await analyzeAccidentImages({ fileUrl });
+        
+        if (!llmResponse || !llmResponse.analysis) {
+            console.error("Invalid LLM response:", llmResponse);
+            return res.status(500).json({ message: 'LLM 서버에서 유효한 데이터를 반환하지 않았습니다.' });
+        }
 
-        // 테스트용 Mock 데이터
-        // accident_type: 추돌/전복/역주행 충돌/접촉
-        // severity: 경미/보통/심각
-        const accident_type = { type: "추돌 사고", severity: "심각" }; 
-        // damage: 후미 파손/앞 범퍼 파손 등.. (자동차 데미지)
-        // injury: 없음/경상자 1명/사망자 1명, 중상자 2명/ ... (인명 피해) 
-        const damaged_situation = { damage: "후미 파손", injury: "없음" };
-        // 사고에 관련된 차량수
-        const number_of_vehicle = 2;
-        // type: 승용차/SUV/경차 등...
-        // color: 색깔
-        // damage: 차량별 피해
-        const vehicle = [
-            { type: "승용차", color: "흰색", damage: "후미 파손" },
-            { type: "SUV", color: "검정색", damage: "전면 파손" },
-        ];
-        const description = "외부 LLM 서버에서 반환된 설명입니다.";
-
-        // 유효성 검사
-        if (!description || !accident_type || !damaged_situation || !number_of_vehicle || !vehicle) {
-        return res.status(500).json({ message: 'LLM 서버에서 유효한 데이터를 반환하지 않았습니다.' });
+        const { analysis } = llmResponse; // LLM 분석 결과 데이터
+        // 필드 유효성 검사
+        if (
+            !analysis.description || 
+            !analysis.accident_type || 
+            !analysis.damaged_situation || 
+            !analysis.number_of_vehicle || 
+            !Array.isArray(analysis.vehicles)
+        ) {
+            console.warn("Analysis data missing required fields:", analysis);
+            return res.status(500).json({ message: 'LLM 분석 결과가 유효하지 않습니다.' });
         }
 
         // Prisma를 사용하여 데이터 업데이트
         const updatedReport = await prisma.report.update({
-        where: { report_id },
-        data: {
-            accident_type,
-            damaged_situation,
-            number_of_vehicle,
-            vehicle,
-            description,
-        },
+            where: { report_id },
+            data: {
+                accident_type: analysis.accident_type,
+                damaged_situation: analysis.damaged_situation,
+                number_of_vehicle: analysis.number_of_vehicle,
+                vehicle: analysis.vehicles,
+                description: analysis.description,
+            },
         });
 
         res.status(200).json({

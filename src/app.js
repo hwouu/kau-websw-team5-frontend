@@ -24,6 +24,7 @@ const __dirname = path.dirname(__filename);
 
 app.use(cors(corsOptions));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true })); // URL 인코딩된 데이터 파싱
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, '..', 'public'))); // 정적파일 제공
 
