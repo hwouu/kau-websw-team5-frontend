@@ -3,11 +3,20 @@ import prisma from '../config/prismaClient.js';
 // 특정 보고서 조회
 export const getReport = async (req, res) => {
   try {
+
     const { reportId } = req.params;
 
     if (!reportId) {
       return res.status(400).json({ message: 'reportId가 필요합니다.' });
     }
+
+    const userId = req.user.userId;
+
+    // 현재 유저 정보에서 isMaster 확인
+    const user = await prisma.user.findUnique({
+      where: { userID: userId },
+      select: { isMaster: true },
+    });
 
     // Prisma를 사용하여 보고서 조회
     const report = await prisma.report.findUnique({
@@ -15,12 +24,17 @@ export const getReport = async (req, res) => {
     });
 
     if (!report) {
-        return res.status(404).json({ message: '해당 reportId로 보고서를 찾을 수 없습니다.' });
+      return res.status(404).json({ message: '해당 reportId로 보고서를 찾을 수 없습니다.' });
+    }
+
+    // 마스터이거나, 현재 사용자가 보고서 작성자일 경우에만 조회 허용
+    if (!user?.isMaster && report.user_id !== userId) {
+      return res.status(403).json({ message: '이 보고서를 조회할 권한이 없습니다.' });
     }
 
     res.status(200).json({
-        message: '보고서 조회 성공',
-        report,
+      message: '보고서 조회 성공',
+      report,
     });
   } catch (error) {
     console.error('Error in getReportById:', error.message);
@@ -31,17 +45,28 @@ export const getReport = async (req, res) => {
   }
 }
 
-// 전체 보고서 조회
+// 전체 보고서 조회 (일반 사용자 => 해당 사용자 생성 보고서만 조회, 마스터 => 모든 보고서 조회회)
 export const getAllReports = async (req, res) => {
   try {
 
     // 인증된 사용자 ID 가져오기
     const userId = req.user.userId;
 
-    // Prisma를 사용하여 모든 보고서 조회 (해당 사용자의 보고서)
-    const reports = await prisma.report.findMany({
-      where: { user_id: userId },
+    // 현재 사용자의 정보를 조회하여 isMaster 여부 확인
+    const user = await prisma.user.findUnique({
+      where: { userID: userId },
+      select: { isMaster: true },
     });
+
+    let reports;
+
+    if (user?.isMaster) { // isMaster = true (모든 사용자)
+      reports = await prisma.report.findMany();
+    } else { // isMaster = false (일반 사용자자)
+      reports = await prisma.report.findMany({
+        where: { user_id: userId },
+      });
+    }
 
     res.status(200).json({
       message: '전체 보고서 조회 성공',
@@ -116,3 +141,51 @@ export const getSortedReports = async (req, res) => {
     });
   }
 };
+
+// 특정 보고서 삭제
+export const deleteReport = async (req, res) => {
+  try {
+    // 인증된 사용자 ID 가져오기
+    const userId = req.user.userId;
+    const { reportId } = req.params; // 삭제할 보고서 ID 가져오기
+  
+    // 사용자의 isMaster 여부 체크
+    const user = await prisma.user.findUnique({
+      where: { userID: userId },
+      select: { isMaster: true },
+    });
+
+    // 삭제할 보고서 조회
+    const report = await prisma.report.findUnique({
+      where: { report_id: reportId },
+    });
+
+    if (!report) {
+      return res.status(404).json({
+        message: '해당 보고서를 찾을 수 없습니다.',
+      });
+    }
+
+    // 마스터가 아니라면, 자기 자신의 보고서인지 확인
+    if (!user?.isMaster && report.user_id !== userId) {
+      return res.status(403).json({
+        message: '이 보고서를 삭제할 권한이 없습니다.',
+      });
+    }
+
+    // 보고서 삭제
+    await prisma.report.delete({
+      where: { report_id: reportId },
+    });
+
+    res.status(200).json({
+      message: '보고서 삭제 성공',
+    });
+  } catch (error) {
+    console.error('Error in deleteReport:', error.message);
+    res.status(500).json({
+      message: '보고서 삭제 중 오류가 발생했습니다.',
+      error: error.message,
+    });
+  }
+}

@@ -1,5 +1,5 @@
 import express from 'express';
-import { getAllReports, getSortedReports, getReport } from '../controllers/reportController.js';
+import { getAllReports, getSortedReports, getReport, deleteReport } from '../controllers/reportController.js';
 import { authMiddleware } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
@@ -10,6 +10,7 @@ router.use(authMiddleware);
 router.get('/', getAllReports); // 전체 보고서 조회
 router.get('/sorted', getSortedReports); // 정렬된 보고서 조회
 router.get('/:reportId', getReport); // 특정 보고서 조회
+router.delete('/:reportId', deleteReport); // 특정 보고서 삭제제
 
 
 export default router;
