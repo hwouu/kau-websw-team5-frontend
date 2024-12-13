@@ -72,7 +72,7 @@ export const loginUser = async (req, res, next) => {
     res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: false, sameSite: 'strict' });
 
     // 로그인 성공 응답
-    res.status(200).json({ message: '로그인 성공!', accessToken, userID: user.userID });
+    res.status(200).json({ message: '로그인 성공!', accessToken, userID: user.userID, username: user.username, email: user.email  });
   } catch (err) {
     next(err); // 에러는 다음 미들웨어로 전달
   }
