@@ -22,6 +22,7 @@ model User {
   adminVerified Boolean   @default(false)
   emailToken    String?
   adminToken    String?
+  isMaster      Boolean   @default(false)
   createdAt     DateTime  @default(now())
 
   reports       Report[] // User가 여러 Reports를 가질 수 있음
