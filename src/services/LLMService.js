@@ -16,7 +16,7 @@ Please determine if there are any traffic accidents or notable traffic events ha
 If yes, please give detailed descriptions in JSON format, if no, explain the reason in JSON format.
 JSON output structure:
 1. accident_type: {"type": "<accident type>", "severity": "<severity>"} 
-  - type: "4중 추돌사고", "전복", "접촉", "차량 대 차량", "차량 대 보행자" 등 사고 유형.
+  - type: "추돌", "전복", "접촉", "차량 대 차량", "차량 대 보행자" 등 대략적인 사고 유형.
   - severity: "경미", "보통", "심각" 중 하나로 사고 심각도.
 
 2. damaged_situation: {"damage": "<damage detail>", "injury": "<injury detail>"}
