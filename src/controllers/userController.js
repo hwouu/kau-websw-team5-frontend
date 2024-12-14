@@ -87,3 +87,78 @@ export const logoutUser = (req, res) => {
   // 로그아웃 성공 응답
   res.status(200).json({ message: '로그아웃 성공!' });
 };
+
+// 전체 사용자 목록 조회 컨트롤러
+export const getAllUsers = async (req, res, next) => {
+  try {
+    // 현재 요청한 유저 정보 조회
+    const currentUser = await prisma.user.findUnique({
+      where: { userID: req.user.userId },
+    });
+
+    // isMaster 권한 체크
+    if (!currentUser || !currentUser.isMaster) {
+      return res.status(403).json({ message: '접근 권한이 없습니다. (isMaster 권한 필요)' });
+    }
+
+    // 전체 유저 목록 조회 (마스트 제외)
+    const users = await prisma.user.findMany({
+      where: {
+        isMaster: false
+      }
+    });
+
+    res.status(200).json({ users });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// 선택한 사용자 회원 삭제 컨트롤러
+export const deleteUser = async (req, res, next) => {
+  const { userId } = req.params; // 삭제할 사용자 ID
+
+  try {
+    // 현재 요청한 유저 정보 조회
+    const currentUser = await prisma.user.findUnique({
+      where: { userID: req.user.userId },
+    });
+
+    // 마스터 권한 체크
+    if (!currentUser || !currentUser.isMaster) {
+      return res.status(403).json({ message: '접근 권한이 없습니다. (isMaster 권한 필요)' });
+    }
+
+    // 삭제 대상 사용자 조회
+    const targetUser = await prisma.user.findUnique({
+      where: { userID: Number(userId) },
+      include: { reports: true }
+    });
+
+    if (!targetUser) {
+      return res.status(404).json({ message: '삭제할 사용자를 찾을 수 없습니다.' });
+    }
+
+    // 마스터 자기 자신을 삭제하려 하는 경우 방지
+    if (targetUser.userID === currentUser.userID) {
+      return res.status(400).json({ message: '자기 자신을 삭제할 수 없습니다.' });
+    }
+
+    // 대상 사용자가 가진 모든 보고서의 소유자 변경
+    if (targetUser.reports && targetUser.reports.length > 0) {
+      await prisma.report.updateMany({
+        where: { user_id: targetUser.userID },
+        data: { user_id: currentUser.userID },
+      });
+    }
+
+    // 대상 사용자 삭제
+    await prisma.user.delete({
+      where: { userID: targetUser.userID },
+    });
+
+    return res.status(200).json({ message: '사용자가 성공적으로 삭제되었습니다. 해당 사용자의 보고서는 마스터 계정으로 이전되었습니다.' });
+  } catch (err) {
+    next(err);
+  }
+}

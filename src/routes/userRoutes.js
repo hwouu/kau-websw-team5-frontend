@@ -1,5 +1,5 @@
 import express from 'express';
-import { registerUser, loginUser, logoutUser } from '../controllers/userController.js';
+import { registerUser, loginUser, logoutUser, getAllUsers, deleteUser } from '../controllers/userController.js';
 import { registerMiddleware } from '../middlewares/userMiddleware.js';
 import { authMiddleware } from '../middlewares/authMiddleware.js';
 import { verifyUserEmailToken, verifyAdminEmailToken } from '../middlewares/emailVerificationMiddleware.js';
@@ -25,6 +25,12 @@ router.post('/login', loginUser); // 사용자 로그인 라우트
 
 // 로그아웃 라우트
 router.post('/logout', logoutUser);
+
+// 전체 유저 목록 조회 라우트 (마스터 유저 권한)
+router.get('/all-users', authMiddleware, getAllUsers);
+
+// 특정 사용자 삭제 (마스터 유저 권한)
+router.delete('/delete-user/:userId', authMiddleware, deleteUser);
 
 // 사용자 프로필 접근 라우트 예시 
 router.get('/profile', authMiddleware);
