@@ -42,11 +42,28 @@ model Report {
   fileUrl         Json?                      
   fileType        String?                    
   created_at      DateTime  @default(now())  
-  updated_at      DateTime  @updatedAt       
+  updated_at      DateTime  @updatedAt  
 
   // User와의 관계 정의
   User            User      @relation(fields: [user_id], references: [userID])
 
   // 인덱스
   @@index([user_id], map: "idx_user_id")           // 사용자별 조회를 위한 인덱스
+}
+
+
+model FAQs {
+  id        Int      @id @default(autoincrement())
+  question  String
+  answer    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}     
+
+model Notices {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
