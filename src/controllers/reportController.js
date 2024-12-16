@@ -60,11 +60,22 @@ export const getAllReports = async (req, res) => {
 
     let reports;
 
-    if (user?.isMaster) { // isMaster = true (모든 사용자)
-      reports = await prisma.report.findMany();
-    } else { // isMaster = false (일반 사용자자)
+    if (user?.isMaster) {
+      // 마스터: 모든 보고서 조회, fileUrl와 description이 null이 아닌 것만
       reports = await prisma.report.findMany({
-        where: { user_id: userId },
+        where: {
+          fileUrl: { not: null },
+          description: { not: null },
+        }
+      });
+    } else {
+      // 일반 사용자: 해당 사용자 보고서만 조회, 역시 null 아닌 것만
+      reports = await prisma.report.findMany({
+        where: {
+          user_id: userId,
+          fileUrl: { not: null },
+          description: { not: null },
+        },
       });
     }
 
