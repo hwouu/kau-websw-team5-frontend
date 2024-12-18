@@ -182,7 +182,7 @@ export const checkUser = async (req, res, next) => {
       });
     } else {
       return res.status(200).json({ 
-        message: '현재 사용자는 일반반 사용자 입니다.', 
+        message: '현재 사용자는 일반 사용자 입니다.', 
         userID: currentUser.userID, 
         username: currentUser.username, 
         email: currentUser.email,
