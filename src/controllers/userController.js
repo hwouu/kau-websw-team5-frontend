@@ -162,3 +162,34 @@ export const deleteUser = async (req, res, next) => {
     next(err);
   }
 }
+
+// 현재 로그인한 유저가 마스터 or 일반 유저인지 구분하는 컨트롤러
+export const checkUser = async (req, res, next) => {
+  try {
+    // 현재 요청한 유저 정보 조회
+    const currentUser = await prisma.user.findUnique({
+      where: { userID: req.user.userId },
+    });
+
+    // isMaster 권한 체크
+    if (currentUser.isMaster) { 
+      return res.status(200).json({ 
+        message: '현재 사용자는 Master (관리자) 사용자 입니다.', 
+        userID: currentUser.userID, 
+        username: currentUser.username, 
+        email: currentUser.email,
+        isMaster: currentUser.isMaster
+      });
+    } else {
+      return res.status(200).json({ 
+        message: '현재 사용자는 일반반 사용자 입니다.', 
+        userID: currentUser.userID, 
+        username: currentUser.username, 
+        email: currentUser.email,
+        isMaster: currentUser.isMaster
+      });
+    } 
+  } catch (err) {
+    next(err);
+  }
+}
